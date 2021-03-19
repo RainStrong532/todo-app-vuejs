@@ -2,6 +2,9 @@
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png">
     <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <b-button variant="primary">
+      click me
+    </b-button>
   </div>
 </template>
 
