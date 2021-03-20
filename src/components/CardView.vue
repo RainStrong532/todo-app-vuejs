@@ -1,8 +1,8 @@
 <template>
   <div class="card-view" @click="gotoDetail">
-    <h1>Tiêu đề</h1>
+    <h1>{{card.title}}</h1>
     <p>
-      {{ date.getDate() }}/{{date.getMonth()+1}}/{{date.getFullYear()}}
+      {{card.date}}
     </p>
   </div>
 </template>
@@ -11,7 +11,10 @@
 export default {
   name: "CardView",
   props:{
-
+      card: {
+        type: Object,
+        default: () => null
+      }
   },
   data() {
     return {
@@ -20,7 +23,7 @@ export default {
   },
   methods: {
       gotoDetail(){
-          this.$router.push('/card-detail');
+          this.$router.push('/card-detail/'+this.card.id);
       }
   },
 };
@@ -32,6 +35,7 @@ export default {
     border-radius: 10px;
     background: #83e7ba;
     cursor: pointer;
+    margin: 0 10px;
     box-shadow: 1px 2px 8px #999;
 }
 .card-view:hover{

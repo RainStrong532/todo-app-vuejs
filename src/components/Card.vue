@@ -1,13 +1,18 @@
 <template>
   <div class="card-container">
     <div>
+      <div class="saved-status" :class="{saved: saved}">
+        saved
+      </div>
       <div class="date-time">
         <div class="date">{{ date.getDate() }}</div>
         <div class="day">{{ days[date.getDay()] }}</div>
         <div class="month">{{ months[date.getMonth()] }}</div>
         <div class="year">{{ date.getFullYear() }}</div>
         <div class="count">
-            <p>{{todos.filter(item=>item.status).length}}/{{todos.length}}</p>
+          <p>
+            {{ listTodo.filter((item) => item.status).length }}/{{ listTodo.length }}
+          </p>
         </div>
         <div class="arrow" @click="beforeOneDay">
           <img src="@/assets/images/arrow-left.svg" alt="icon" />
@@ -18,7 +23,7 @@
       </div>
       <div class="list-todo">
         <ul class="list">
-          <li class="item" v-for="(todo, index) of todos" v-bind:key="index">
+          <li class="item" v-for="(todo, index) of listTodo" v-bind:key="index">
             <p :class="{ enable: todo.status }">{{ todo.name }}</p>
             <div @click="changeStatus(index)">
               <img
@@ -59,7 +64,25 @@
         </b-modal>
       </div>
       <div class="add">
-        <b-button variant="success"> Add </b-button>
+        <b-button v-if="todo" variant="success" @click="handleAddNewTodo">
+          Add
+        </b-button>
+        <b-button v-else v-b-modal.modal-2 variant="danger">Remove</b-button>
+        <div>
+          <b-modal
+            id="modal-2"
+            title="Notify"
+            @ok="handleDelete"
+            hide-footer
+          >
+            <h3>Are you sure about that?</h3>
+            <hr />
+            <div>
+              <b-button variant="secondary"> No </b-button>
+              <b-button variant="primary"> Yes </b-button>
+            </div>
+          </b-modal>
+        </div>
       </div>
     </div>
   </div>
@@ -67,16 +90,22 @@
 
 <script>
 import { days, months } from "../../constants";
+import { deleteTodo } from "../fetchApis";
 export default {
   name: "card",
+  props: {
+    todo: {
+      type: Object,
+      default: () => null,
+    },
+    title: {
+      type: String,
+      default: () => "untitle"
+    }
+  },
   data() {
     return {
-      todos: [
-        {
-          name: "Go to the cinema Go to the cinema Go to the cinema",
-          status: false,
-          date: new Date(),
-        },
+      listTodo: [
       ],
       item: {
         name: "",
@@ -85,14 +114,23 @@ export default {
       date: new Date(),
       days,
       months,
+      saved: true
     };
+  },
+  watch: {
+    listTodo: function(){
+      this.saved = false;
+    },
+    title: function(){
+      this.saved = false;
+    }
   },
   methods: {
     handleSubmit(bvModalEvt) {
       bvModalEvt.preventDefault;
       if (this.item.name.length > 0) {
         let itemAdd = { ...this.item, date: this.date };
-        this.todos.push(itemAdd);
+        this.listTodo.push(itemAdd);
         this.$nextTick(() => {
           this.$bvModal.hide("modal-prevent-closing");
         });
@@ -114,8 +152,18 @@ export default {
       this.date = d;
     },
     changeStatus(index) {
-      this.todos[index].status = !this.todos[index].status;
+      this.listTodo[index].status = !this.listTodo[index].status;
     },
+    handleDelete: async function () {
+      try {
+        const res = await deleteTodo({ id: this.todo.id });
+        console.log(res);
+        this.$router.push("/");
+      } catch (err) {
+        alert(err);
+      }
+    },
+    handleAddNewTodo: async function () {},
   },
 };
 </script>
@@ -132,18 +180,18 @@ export default {
   flex-direction: column;
   justify-content: space-between;
 }
-.card-container >div:first-child{
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+.card-container > div:first-child {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
-.card-container >div:first-child >div:last-child{
-    flex-grow: 1;
+.card-container > div:first-child > div:last-child {
+  flex-grow: 1;
 }
 .list-todo {
-    display: flex;
-    flex-direction: row;
-    padding: 0 10px;
+  display: flex;
+  flex-direction: row;
+  padding: 0 10px;
 }
 .list {
   list-style-type: none;
@@ -164,7 +212,8 @@ export default {
   border-radius: 10px;
   margin-bottom: 10px;
 }
-.item:hover, .item:nth-child(even) {
+.item:hover,
+.item:nth-child(even) {
   background: rgba(0, 0, 0, 0.1);
 }
 .item p {
@@ -234,18 +283,32 @@ export default {
 
 /* Track */
 .list::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 5px grey; 
+  box-shadow: inset 0 0 5px grey;
   border-radius: 7.5px;
 }
- 
+
 /* Handle */
 .list::-webkit-scrollbar-thumb {
-  background: #83e7ba; 
+  background: #83e7ba;
   border-radius: 7.5px;
 }
 
 /* Handle on hover */
 .list::-webkit-scrollbar-thumb:hover {
-  background: #83e7ba; 
+  background: #83e7ba;
+}
+.saved-status{
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  padding: 10px 20px;
+  background: #E74C3C;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 1px 2px 6px #666;
+  cursor: context-menu;
+}
+.saved{
+  background: #5DADE2;
 }
 </style>
