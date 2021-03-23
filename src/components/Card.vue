@@ -1,17 +1,24 @@
 <template>
   <div class="card-container">
     <div>
-      <div class="saved-status" :class="{saved: saved}">
+      <div
+        v-if="$router.currentRoute.params.id"
+        class="saved-status"
+        :class="{ saved: saved }"
+        @click="saveData"
+      >
         saved
       </div>
       <div class="date-time">
-        <div class="date">{{ date.getDate() }}</div>
-        <div class="day">{{ days[date.getDay()] }}</div>
-        <div class="month">{{ months[date.getMonth()] }}</div>
-        <div class="year">{{ date.getFullYear() }}</div>
+        <div class="date">{{ new Date(date).getDate() }}</div>
+        <div class="day">{{ days[new Date(date).getDay()] }}</div>
+        <div class="month">{{ months[new Date(date).getMonth()] }}</div>
+        <div class="year">{{ new Date(date).getFullYear() }}</div>
         <div class="count">
           <p>
-            {{ listTodo.filter((item) => item.status).length }}/{{ listTodo.length }}
+            {{ lt.filter((item) => item.status).length }}/{{
+              lt.length
+            }}
           </p>
         </div>
         <div class="arrow" @click="beforeOneDay">
@@ -23,14 +30,10 @@
       </div>
       <div class="list-todo">
         <ul class="list">
-          <li class="item" v-for="(todo, index) of listTodo" v-bind:key="index">
-            <p :class="{ enable: todo.status }">{{ todo.name }}</p>
+          <li class="item" v-for="(t, index) of lt" v-bind:key="index">
+            <p :class="{ enable: t.status }">{{ t.name }}</p>
             <div @click="changeStatus(index)">
-              <img
-                v-if="!todo.status"
-                src="@/assets/images/sad.svg"
-                alt="icon"
-              />
+              <img v-if="!t.status" src="@/assets/images/sad.svg" alt="icon" />
               <img
                 v-else
                 src="@/assets/images/happy.svg"
@@ -64,22 +67,25 @@
         </b-modal>
       </div>
       <div class="add">
-        <b-button v-if="todo" variant="success" @click="handleAddNewTodo">
+        <b-button
+          v-if="!$router.currentRoute.params.id"
+          variant="success"
+          @click="handleAddNewTodo"
+        >
           Add
         </b-button>
         <b-button v-else v-b-modal.modal-2 variant="danger">Remove</b-button>
         <div>
-          <b-modal
-            id="modal-2"
-            title="Notify"
-            @ok="handleDelete"
-            hide-footer
-          >
+          <b-modal id="modal-2" title="Notify" @ok="handleDelete" hide-footer>
             <h3>Are you sure about that?</h3>
             <hr />
-            <div>
-              <b-button variant="secondary"> No </b-button>
-              <b-button variant="primary"> Yes </b-button>
+            <div class="btn-cnt">
+              <b-button variant="secondary" @click="closeModal($event)">
+                No
+              </b-button>
+              <b-button variant="primary" @click="handleDelete($event)">
+                Yes
+              </b-button>
             </div>
           </b-modal>
         </div>
@@ -90,7 +96,7 @@
 
 <script>
 import { days, months } from "../../constants";
-import { deleteTodo } from "../fetchApis";
+import { addTodo, deleteTodo } from "../fetchApis";
 export default {
   name: "card",
   props: {
@@ -100,39 +106,47 @@ export default {
     },
     title: {
       type: String,
-      default: () => "untitle"
+      default: () => "untitle",
+    },
+    saved: {
+      type: Boolean,
+      default: () => false,
+    },
+    lt: {
+      type: Array,
+      default: () => []
+    },
+    date: {
+      type: String,
+      default: () => new Date().toString()
     }
   },
   data() {
     return {
-      listTodo: [
-      ],
       item: {
         name: "",
         status: false,
       },
-      date: new Date(),
       days,
       months,
-      saved: true
     };
   },
   watch: {
-    listTodo: function(){
-      this.saved = false;
-    },
-    title: function(){
-      this.saved = false;
+    tl: function(){
+      console.log("props change");
     }
+  },
+  mounted() {
+    console.log("todo: ", this.listTodo);
   },
   methods: {
     handleSubmit(bvModalEvt) {
       bvModalEvt.preventDefault;
       if (this.item.name.length > 0) {
-        let itemAdd = { ...this.item, date: this.date };
-        this.listTodo.push(itemAdd);
+        let itemAdd = { ...this.item};
+        this.$emit("addNewTodo", itemAdd);
         this.$nextTick(() => {
-          this.$bvModal.hide("modal-prevent-closing");
+          this.$bvModal.hide("modal-1");
         });
       } else {
         alert("Your todo is empty!");
@@ -143,18 +157,18 @@ export default {
       this.item.name = "";
     },
     afterOneDay() {
-      const d = new Date(this.date.getTime() + 24 * 60 * 60 * 1000);
-      this.date = d;
+      const d = new Date(new Date(this.date).getTime() + 24 * 60 * 60 * 1000);
+      this.$emit("updateDate", d.toString());
     },
     beforeOneDay() {
-      console.log("clicked");
-      const d = new Date(this.date.getTime() - 24 * 60 * 60 * 1000);
-      this.date = d;
+      const d = new Date(new Date(this.date).getTime() - 24 * 60 * 60 * 1000);
+      this.$emit("updateDate", d.toString());
     },
     changeStatus(index) {
-      this.listTodo[index].status = !this.listTodo[index].status;
+      this.$emit("changeStatus", index);
     },
-    handleDelete: async function () {
+    handleDelete: async function (bvModalEvt) {
+      bvModalEvt.preventDefault;
       try {
         const res = await deleteTodo({ id: this.todo.id });
         console.log(res);
@@ -162,8 +176,32 @@ export default {
       } catch (err) {
         alert(err);
       }
+      this.$nextTick(() => {
+        this.$bvModal.hide("modal-2");
+      });
     },
-    handleAddNewTodo: async function () {},
+    closeModal() {
+      this.$nextTick(() => {
+        this.$bvModal.hide("modal-2");
+      });
+    },
+    handleAddNewTodo: async function () {
+      try {
+        let data = {
+          listTodo: this.lt,
+          date: this.date,
+          title: this.title,
+        };
+        const res = await addTodo(data);
+        console.log(res);
+        this.$router.push("/todo/" + res.id);
+      } catch (err) {
+        alert(err);
+      }
+    },
+    saveData(){
+      this.$emit("update");
+    }
   },
 };
 </script>
@@ -172,6 +210,7 @@ export default {
 .card-container {
   width: 500px;
   height: 80vh;
+  min-height: 680px;
   box-shadow: 2px 3px 12px #666;
   border-radius: 8px;
   background: #eee;
@@ -200,7 +239,7 @@ export default {
   padding: 0;
   margin-bottom: 20px;
   overflow-y: scroll;
-  max-height: 300px;
+  height: 280px;
 }
 .item {
   display: flex;
@@ -297,18 +336,25 @@ export default {
 .list::-webkit-scrollbar-thumb:hover {
   background: #83e7ba;
 }
-.saved-status{
+.saved-status {
   position: fixed;
   top: 30px;
   right: 30px;
   padding: 10px 20px;
-  background: #E74C3C;
+  background: #e74c3c;
   color: #fff;
   border-radius: 8px;
   box-shadow: 1px 2px 6px #666;
   cursor: context-menu;
 }
-.saved{
-  background: #5DADE2;
+.saved {
+  background: #5dade2;
+}
+.btn-cnt {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-cnt button {
+  margin: 0 10px;
 }
 </style>

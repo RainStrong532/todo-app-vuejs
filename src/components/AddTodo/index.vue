@@ -6,7 +6,7 @@
 import CardDetail from '../CardDetail.vue';
 export default {
   components: { CardDetail },
-  name: "addCard"
+  name: "addCard",
 };
 </script>
 

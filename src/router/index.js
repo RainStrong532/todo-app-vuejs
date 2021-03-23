@@ -5,7 +5,7 @@ import AddTodo from '../components/AddTodo'
 
 export const routes = [
     { path: '/', component: Home },
+    {path: '/todo/add', component: AddTodo, name: 'add-todo'},
     { path: '/todo/:id', component: CardDetail },
     {path: '*', component: ErrorComp},
-    {path: '/todos/add', component: AddTodo, name: 'add-todo'},
   ]

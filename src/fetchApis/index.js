@@ -14,6 +14,20 @@ export const getData = () => {
         .catch(err=>reject(err))
     })
 }
+export const getDataById = (data) => {
+    return new Promise((resolve, reject) => {
+        const url = DOMAIN+'todos/'+data.id;
+        fetch(
+            url,
+            {
+                method: 'GET'
+            }
+        )
+        .then((res) => res.json())
+        .then(res=>resolve(res))
+        .catch(err=>reject(err))
+    })
+}
 export const deleteTodo = (data) => {
     return new Promise((resolve, reject) => {
         const url = DOMAIN+'todos/'+data.id;

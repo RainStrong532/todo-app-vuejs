@@ -54,11 +54,18 @@ h1 {
   align-items: center;
   justify-content: center;
 }
-.card-cnt {
+.card-cnt{
   width: 100vw;
   display: flex;
   flex-wrap: wrap;
   padding: 20px 60px;
+}
+.card-container{
+  width: 100vw;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px 60px;
+  min-height: 680px;
 }
 .add-btn{
   padding: 20px 30px;
